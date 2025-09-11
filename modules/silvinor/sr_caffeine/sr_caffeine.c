@@ -1,6 +1,7 @@
 // Copyright 2025 Silvino R. (@silvinor)
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#include <stdio.h>
 #include QMK_KEYBOARD_H
 #include "sr_caffeine.h"
 #ifdef CONSOLE_ENABLE
@@ -22,7 +23,7 @@
 #endif
 
 #ifndef CAFFEINE_KEY_DELAY
-#    define CAFFEINE_KEY_DELAY 59000 // 1 sec shy of 1 minute
+#    define CAFFEINE_KEY_DELAY 5000 // 1 sec shy of 1 minute
 #endif
 
 #ifndef CAFFEINE_KEY_CODE
@@ -47,22 +48,19 @@ bool is_blink_led_on = false; // Used by blink LED timer buffer
 uint32_t timer_blink_buffer = 0; // Blink LED timer buffer
 #endif
 
-#ifdef MOUSEKEY_ENABLE
 uint8_t mouse_loop = 0; // keep track of the jiggle mouse movements
-#endif
 
 /**
  * Internal keycode pusher ---------------------------------------------------
  */
 void __caffeine_tap_jiggle(bool mouseMove) {
 #ifdef CONSOLE_ENABLE
-    print("*** Caffeine Tap/Jiggle\n");
+    print("*** Caffeine Tap/Jiggleggggggg\n");
 #endif
 
     // --- tap a key ---
     tap_code(CAFFEINE_KEY_CODE);
 
-#ifdef MOUSEKEY_ENABLE
     // --- mouse jiggle ---
     //       ┌───┐
     //       │ 0 │      0 -> Up Down
@@ -74,25 +72,44 @@ void __caffeine_tap_jiggle(bool mouseMove) {
     if (mouseMove) {
         switch (mouse_loop) {
             case 1:
-                tap_code(KC_MS_RIGHT);
-                tap_code(KC_MS_LEFT);
+                print("*** Caffeine QK_MOUSE_CURSOR_RIGHT/QK_MOUSE_CURSOR_LEFT\n");
+                tap_code(QK_MOUSE_CURSOR_RIGHT);
+                tap_code(QK_MOUSE_CURSOR_RIGHT);
+                tap_code(QK_MOUSE_CURSOR_RIGHT);
+                tap_code(QK_MOUSE_CURSOR_LEFT);
+                tap_code(QK_MOUSE_CURSOR_LEFT);
+                tap_code(QK_MOUSE_CURSOR_LEFT);
                 break;
             case 2:
-                tap_code(KC_MS_DOWN);
-                tap_code(KC_MS_UP);
+                print("*** Caffeine QK_MOUSE_CURSOR_DOWN/QK_MOUSE_CURSOR_UP\n");
+                tap_code(QK_MOUSE_CURSOR_DOWN);
+                tap_code(QK_MOUSE_CURSOR_DOWN);
+                tap_code(QK_MOUSE_CURSOR_DOWN);
+                tap_code(QK_MOUSE_CURSOR_UP);
+                tap_code(QK_MOUSE_CURSOR_UP);
+                tap_code(QK_MOUSE_CURSOR_UP);
                 break;
             case 3:
-                tap_code(KC_MS_LEFT);
-                tap_code(KC_MS_RIGHT);
+                print("*** Caffeine QK_MOUSE_CURSOR_LEFT/QK_MOUSE_CURSOR_RIGHT\n");
+                tap_code(QK_MOUSE_CURSOR_LEFT);
+                tap_code(QK_MOUSE_CURSOR_LEFT);
+                tap_code(QK_MOUSE_CURSOR_LEFT);
+                tap_code(QK_MOUSE_CURSOR_RIGHT);
+                tap_code(QK_MOUSE_CURSOR_RIGHT);
+                tap_code(QK_MOUSE_CURSOR_RIGHT);
                 break;
             default:
-                tap_code(KC_MS_UP);
-                tap_code(KC_MS_DOWN);
+                print("*** Caffeine QK_MOUSE_CURSOR_UP/QK_MOUSE_CURSOR_DOWN\n");
+                tap_code(QK_MOUSE_CURSOR_UP);
+                tap_code(QK_MOUSE_CURSOR_UP);
+                tap_code(QK_MOUSE_CURSOR_UP);
+                tap_code(QK_MOUSE_CURSOR_DOWN);
+                tap_code(QK_MOUSE_CURSOR_DOWN);
+                tap_code(QK_MOUSE_CURSOR_DOWN);
                 break;
         }
         mouse_loop = (mouse_loop + 1) % 4;
     }
-#endif // MOUSEKEY_ENABLE
 }
 
 /**
@@ -117,10 +134,12 @@ __attribute__((weak)) void blink_changed_sr_caffeine(bool is_blink_on) {
 /**
  * Loop Scan -----------------------------------------------------------------
  * !! : if you're using as a module, you will need to call this from within a `matrix_scan_user` function
- *   #ifdef COMMUNITY_MODULE_CAFFEINE_ENABLE
- *   void matrix_scan_user(void) {}
- *   #endif
  */
+void matrix_scan_user(void) {
+    matrix_scan_sr_caffeine();
+}
+
+
 void matrix_scan_sr_caffeine(void) {
     if (is_caffeine_on) {
 #if defined(RGB_MATRIX_ENABLE) || defined(LED_CAFFEINE_PIN)
