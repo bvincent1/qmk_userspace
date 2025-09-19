@@ -1,6 +1,4 @@
 {
     "modules": [
-        "qmk/hello_world",
-        "silvinor/sr_caffeine"
     ]
 }

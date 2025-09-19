@@ -74,37 +74,21 @@ void __caffeine_tap_jiggle(bool mouseMove) {
             case 1:
                 print("*** Caffeine QK_MOUSE_CURSOR_RIGHT/QK_MOUSE_CURSOR_LEFT\n");
                 tap_code(QK_MOUSE_CURSOR_RIGHT);
-                tap_code(QK_MOUSE_CURSOR_RIGHT);
-                tap_code(QK_MOUSE_CURSOR_RIGHT);
-                tap_code(QK_MOUSE_CURSOR_LEFT);
-                tap_code(QK_MOUSE_CURSOR_LEFT);
                 tap_code(QK_MOUSE_CURSOR_LEFT);
                 break;
             case 2:
                 print("*** Caffeine QK_MOUSE_CURSOR_DOWN/QK_MOUSE_CURSOR_UP\n");
                 tap_code(QK_MOUSE_CURSOR_DOWN);
-                tap_code(QK_MOUSE_CURSOR_DOWN);
-                tap_code(QK_MOUSE_CURSOR_DOWN);
-                tap_code(QK_MOUSE_CURSOR_UP);
-                tap_code(QK_MOUSE_CURSOR_UP);
                 tap_code(QK_MOUSE_CURSOR_UP);
                 break;
             case 3:
                 print("*** Caffeine QK_MOUSE_CURSOR_LEFT/QK_MOUSE_CURSOR_RIGHT\n");
                 tap_code(QK_MOUSE_CURSOR_LEFT);
-                tap_code(QK_MOUSE_CURSOR_LEFT);
-                tap_code(QK_MOUSE_CURSOR_LEFT);
-                tap_code(QK_MOUSE_CURSOR_RIGHT);
-                tap_code(QK_MOUSE_CURSOR_RIGHT);
                 tap_code(QK_MOUSE_CURSOR_RIGHT);
                 break;
             default:
                 print("*** Caffeine QK_MOUSE_CURSOR_UP/QK_MOUSE_CURSOR_DOWN\n");
                 tap_code(QK_MOUSE_CURSOR_UP);
-                tap_code(QK_MOUSE_CURSOR_UP);
-                tap_code(QK_MOUSE_CURSOR_UP);
-                tap_code(QK_MOUSE_CURSOR_DOWN);
-                tap_code(QK_MOUSE_CURSOR_DOWN);
                 tap_code(QK_MOUSE_CURSOR_DOWN);
                 break;
         }
@@ -112,24 +96,6 @@ void __caffeine_tap_jiggle(bool mouseMove) {
     }
 }
 
-/**
- * Blink State Has Changed ---------------------------------------------------
- */
-#if defined(RGB_MATRIX_ENABLE) || defined(LED_CAFFEINE_PIN)
-__attribute__((weak)) void blink_changed_sr_caffeine(bool is_blink_on) {
-#    ifdef RGB_MATRIX_ENABLE
-    if (is_blink_on) {
-        HSV hsv;
-        hsv.h = caffeine_color_loop * 51;
-        hsv.s = 255;
-        hsv.v = MINMAX(rgb_matrix_get_val() + RGB_MATRIX_VAL_STEP, RGB_MATRIX_MINIMUM_BRIGHTNESS, RGB_MATRIX_MAXIMUM_BRIGHTNESS);
-        // set the new color
-        caffeine_color      = hsv_to_rgb(hsv);
-        caffeine_color_loop = (caffeine_color_loop + 1) % 6;
-    }
-#    endif
-}
-#endif
 
 /**
  * Loop Scan -----------------------------------------------------------------
@@ -142,28 +108,6 @@ void matrix_scan_user(void) {
 
 void matrix_scan_sr_caffeine(void) {
     if (is_caffeine_on) {
-#if defined(RGB_MATRIX_ENABLE) || defined(LED_CAFFEINE_PIN)
-        // Check for elapsed timer
-        if (sync_timer_elapsed32(timer_blink_buffer) > CAFFEINE_BLINK_DELAY) {
-            timer_blink_buffer = sync_timer_read32(); // reset timer
-#    ifdef RGB_MATRIX_ENABLE
-            is_blink_rgb_on = !is_blink_rgb_on;
-#        ifndef LED_CAFFEINE_PIN // stop double up on `blink_changed_sr_caffeine` call
-            blink_changed_sr_caffeine(is_blink_rgb_on);
-#        endif
-#    endif
-#    ifdef LED_CAFFEINE_PIN
-            is_blink_led_on = !is_blink_led_on;
-            blink_changed_sr_caffeine(is_blink_led_on);
-#    endif
-        }
-#endif
-
-#ifdef LED_CAFFEINE_PIN
-        // Set the pin state. Not the best place for this but don't know there is a better place.
-        gpio_write_pin(LED_CAFFEINE_PIN, is_blink_led_on ? LED_PIN_ON_STATE : !LED_PIN_ON_STATE);
-#endif
-
         /* Keycode and Mouse Jiggle code */
         if (sync_timer_elapsed32(timer_caffeine_buffer) > CAFFEINE_KEY_DELAY) { // default = 59 sec
             timer_caffeine_buffer = sync_timer_read32();                        // reset timer
@@ -172,60 +116,7 @@ void matrix_scan_sr_caffeine(void) {
     }
 }
 
-/**
- * Loop Housekeeping ---------------------------------------------------------
- * Note : if you're using as a module, this will get called by the module compile
- */
-void housekeeping_task_sr_caffeine(void) {
-#ifdef RGB_MATRIX_ENABLE
-    // switch off blinking if RGB has been toggled off
-    if (is_blink_rgb_on && !rgb_matrix_is_enabled()) {
-        is_blink_rgb_on = false;
-        if (caffeine_key_index != UINT8_MAX) {
-            rgb_matrix_set_color(caffeine_key_index, RGB_OFF);
-        }
-    }
-#endif // RGB_MATRIX_ENABLE
 
-#ifdef LED_CAFFEINE_PIN
-    if (!is_caffeine_on && is_blink_led_on) {
-        is_blink_led_on = false;
-    }
-#endif // LED_CAFFEINE_PIN
-}
-
-/**
- * rgb_matrix_indicators Call-in ---------------------------------------------
- * !! : if you're using as a module, you will need to call this from within a `rgb_matrix_indicators_user` function
- *   #ifdef COMMUNITY_MODULE_CAFFEINE_ENABLE
- *   bool rgb_matrix_indicators_user(void) {}
- *   #endif
- */
-#ifdef RGB_MATRIX_ENABLE
-bool rgb_matrix_indicators_sr_caffeine(void) {
-    // assume that `matrix_scan_sr_caffeine` is running to toggle `is_blink_rgb_on`
-    if ((caffeine_key_index != UINT8_MAX) && is_blink_rgb_on) {
-        rgb_matrix_set_color(caffeine_key_index, caffeine_color.r, caffeine_color.g, caffeine_color.b);
-    }
-    return true;
-}
-#endif
-
-/**
- * led_update_user Call-in ---------------------------------------------------
- * !! : if you're using as a module, you will need to call this from within a `led_update_user` function
- *   #ifdef LED_CAFFEINE_PIN
- *   bool led_update_user(led_t led_state) {}
- *   #endif
- */
-#ifdef LED_CAFFEINE_PIN
-bool led_update_sr_caffeine(led_t led_state) {
-    if (is_caffeine_on) {
-        gpio_write_pin(LED_CAFFEINE_PIN, is_blink_led_on ? LED_PIN_ON_STATE : !LED_PIN_ON_STATE);
-    }
-    return true;
-}
-#endif
 
 /**
  * Switch ON Caffeine --------------------------------------------------------
@@ -236,10 +127,6 @@ bool process_keycode_sr_caffeine_on(keyrecord_t *record) {
         print("Caffeine ON\n");
 #endif
         __caffeine_tap_jiggle(false); // dummy tap the default keycode so that the kb registers a key tap
-#ifdef RGB_MATRIX_ENABLE
-        // bind the key that was pressed
-        caffeine_key_index = g_led_config.matrix_co[record->event.key.row][record->event.key.col];
-#endif
         // start the timer
         timer_caffeine_buffer = sync_timer_read32();
         is_caffeine_on        = true;
